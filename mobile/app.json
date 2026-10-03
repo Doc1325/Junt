@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "JuntApp",
+    "slug": "juntapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "../public/icon.png",
+    "scheme": "juntapp",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "extra": {
+      "eas": {
+        "projectId": "ad41da45-25ed-4fd4-aebd-1690bc61d612"
+      }
+    },
+    "splash": {
+      "backgroundColor": "#f6f5f0"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.juntapp.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#f6f5f0"
+      },
+      "package": "com.juntapp.mobile",
+      "googleServicesFile": "./google-services.json"
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "../public/icon.png",
+          "color": "#28533a",
+          "googleServicesFile": "./google-services.json"
+        }
+      ],
+      "@react-native-community/datetimepicker",
+      ["expo-navigation-bar", {
+        "enforceContrast": false,
+        "style": "dark"
+      }]
+    ],
+    "owner": "docsant"
+  }
+}

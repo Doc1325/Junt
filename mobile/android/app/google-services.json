@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "906537316209",
+    "project_id": "juntapp-f04c8",
+    "storage_bucket": "juntapp-f04c8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:906537316209:android:0a29e0c709dd7a20bb90d0",
+        "android_client_info": {
+          "package_name": "com.juntapp.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCgP88A_RTWj_OK9H9lXT-HM-28dGJCcI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

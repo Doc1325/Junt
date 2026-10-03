@@ -1,0 +1,3 @@
+[fetch]
+deny = []
+allow = ["exp.host", "api.expo.dev"]

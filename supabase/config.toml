@@ -1,0 +1,27 @@
+[functions]
+[functions.generate-livekit-token]
+
+[functions.notify-new-plan]
+verify_jwt = true
+
+[functions.scrape-padonde]
+enabled = true
+verify_jwt = false
+import_map = "./functions/scrape-padonde/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/scrape-padonde/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/scrape-padonde/*.html" ]
+
+[functions.recommend]
+enabled = true
+verify_jwt = false
+import_map = "./functions/recommend/deno.json"
+# Uncomment to specify a custom file path to the entrypoint.
+# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
+entrypoint = "./functions/recommend/index.ts"
+# Specifies static files to be bundled with the function. Supports glob patterns.
+# For example, if you want to serve static HTML pages in your function:
+# static_files = [ "./functions/recommend/*.html" ]
