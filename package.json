@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "check": "npm run build && npm run lint && npm --prefix mobile run typecheck",
+    "test:db": "npm --prefix mobile exec -- supabase test db",
     "preview": "vite preview"
   },
   "dependencies": {

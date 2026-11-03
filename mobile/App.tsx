@@ -4,12 +4,15 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { StatusBar } from 'expo-status-bar'
 import * as SystemUI from 'expo-system-ui'
 import * as NavigationBar from 'expo-navigation-bar'
+import * as ExpoLinking from 'expo-linking'
 import { NavigationContainer } from '@react-navigation/native'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
 import type { NavigatorScreenParams } from '@react-navigation/native'
 import { Ionicons } from '@expo/vector-icons'
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query'
+import { onlineManager } from '@tanstack/react-query'
+import NetInfo from '@react-native-community/netinfo'
 import { supabase, supabaseConfigured } from './src/lib/supabase'
 import { useFonts, DMSans_400Regular, DMSans_500Medium, DMSans_700Bold } from '@expo-google-fonts/dm-sans'
 import { DMMono_400Regular } from '@expo-google-fonts/dm-mono'
@@ -18,6 +21,9 @@ import type { Session } from '@supabase/supabase-js'
 import { useNotificationNavigation } from './src/lib/notifications'
 import { registerForPushNotificationsAsync } from './src/lib/notifications'
 import type { NotificationData } from './src/lib/notifications'
+import OfflineBanner from './src/components/OfflineBanner'
+import { isRetryableError } from './src/lib/errors'
+import { getPendingInvite, publicAppUrl } from './src/lib/invites'
 
 SystemUI.setBackgroundColorAsync('#f6f5f0')
 
@@ -48,8 +54,8 @@ export type RootStackParamList = {
   WatchRoom: { roomId: string }
   Onboarding: undefined
   InviteAccept: { token: string }
-  Discover: { groupId: string }
-  EventDetail: { kind: string; slug: string; groupId: string; item?: string }
+  Discover: { groupId?: string } | undefined
+  EventDetail: { kind: string; slug: string; groupId?: string; item?: string }
 }
 
 export type MainTabParamList = {
@@ -62,7 +68,27 @@ export type MainTabParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>()
 const Tab = createBottomTabNavigator<MainTabParamList>()
 
-const queryClient = new QueryClient()
+const linking = {
+  prefixes: [ExpoLinking.createURL('/'), publicAppUrl],
+  config: { screens: { InviteAccept: 'invite/:token' } },
+}
+
+onlineManager.setEventListener((setOnline) => NetInfo.addEventListener((state) => {
+  setOnline(Boolean(state.isConnected && state.isInternetReachable !== false))
+}))
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => failureCount < 2 && isRetryableError(error),
+      retryDelay: (attempt) => Math.min(750 * (2 ** attempt), 5000),
+      refetchOnReconnect: true,
+    },
+    // Mutations require an explicit retry unless that operation owns its own
+    // idempotency key (notification delivery does).
+    mutations: { retry: false },
+  },
+})
 
 const tabIcons: Record<keyof MainTabParamList, { focused: keyof typeof Ionicons.glyphMap; default: keyof typeof Ionicons.glyphMap }> = {
   Dashboard: { focused: 'home', default: 'home-outline' },
@@ -133,6 +159,11 @@ function AppContent() {
 
   useNotificationNavigation(onNotificationNavigate)
 
+  const openPendingInvite = useCallback(async () => {
+    const token = await getPendingInvite()
+    if (token) navigationRef.current?.navigate('InviteAccept', { token })
+  }, [])
+
   useEffect(() => {
     NavigationBar.setStyle('dark')
   }, [])
@@ -158,9 +189,10 @@ function AppContent() {
   // Not logged in
   if (!session) {
     return (
-      <NavigationContainer ref={navigationRef}>
+      <NavigationContainer ref={navigationRef} linking={linking}>
         <Stack.Navigator screenOptions={{ animation: 'slide_from_right' }}>
           <Stack.Screen name="Login" component={Login} options={{ headerShown: false }} />
+          <Stack.Screen name="InviteAccept" component={InviteAccept} options={{ headerShown: false }} />
         </Stack.Navigator>
       </NavigationContainer>
     )
@@ -179,7 +211,7 @@ function AppContent() {
 
   // Logged in and onboarded -> main app, Onboarding not in stack at all
   return (
-    <NavigationContainer ref={navigationRef} key="main">
+    <NavigationContainer ref={navigationRef} key="main" linking={linking} onReady={() => void openPendingInvite()}>
       <Stack.Navigator screenOptions={{ animation: 'slide_from_right' }}>
             <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
             <Stack.Screen
@@ -299,7 +331,10 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <StatusBar style="dark" />
-        <AppContent />
+        <View style={{ flex: 1 }}>
+          <OfflineBanner />
+          <AppContent />
+        </View>
       </SafeAreaProvider>
     </QueryClientProvider>
   )

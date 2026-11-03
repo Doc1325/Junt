@@ -5,6 +5,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase, supabaseConfigured } from './lib/supabase'
 import RequireAuth from './components/RequireAuth'
+import OfflineBanner from './components/OfflineBanner'
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
 import Profile from './pages/Profile'
@@ -54,6 +55,7 @@ function AppRoutes() {
       <Route path='/onboarding' element={<RequireAuth session={session}><Onboarding /></RequireAuth>} />
       <Route path='/profile' element={<RequireAuth session={session}><RequireOnboarding><Profile /></RequireOnboarding></RequireAuth>} />
       <Route path='/' element={<RequireAuth session={session}><RequireOnboarding><Dashboard /></RequireOnboarding></RequireAuth>} />
+      <Route path='/discover' element={<RequireAuth session={session}><RequireOnboarding><Discover /></RequireOnboarding></RequireAuth>} />
       <Route path='/groups/new' element={<RequireAuth session={session}><RequireOnboarding><NewGroup /></RequireOnboarding></RequireAuth>} />
         <Route path='/groups/:groupId' element={<RequireAuth session={session}><RequireOnboarding><Group /></RequireOnboarding></RequireAuth>} />
         <Route path='/groups/:groupId/members' element={<RequireAuth session={session}><RequireOnboarding><Members /></RequireOnboarding></RequireAuth>} />
@@ -63,7 +65,7 @@ function AppRoutes() {
         <Route path='/groups/:groupId/watch/new' element={<RequireAuth session={session}><RequireOnboarding><NewWatchPlan /></RequireOnboarding></RequireAuth>} />
         <Route path='/plans/:planId' element={<RequireAuth session={session}><RequireOnboarding><Plan /></RequireOnboarding></RequireAuth>} />
         <Route path='/watch/:roomId' element={<RequireAuth session={session}><RequireOnboarding><WatchRoom /></RequireOnboarding></RequireAuth>} />
-      <Route path='/invite/:token' element={<RequireAuth session={session}><InviteAccept /></RequireAuth>} />
+      <Route path='/invite/:token' element={<InviteAccept session={session} />} />
       <Route path='/join' element={<RequireAuth session={session}><RequireOnboarding><Join /></RequireOnboarding></RequireAuth>} />
       <Route path='*' element={<Navigate to='/' replace />} />
     </Routes>
@@ -71,5 +73,5 @@ function AppRoutes() {
 }
 
 export default function App() {
-  return <BrowserRouter><AppRoutes /></BrowserRouter>
+  return <BrowserRouter><OfflineBanner /><AppRoutes /></BrowserRouter>
 }

@@ -1,0 +1,46 @@
+.home-reco{margin:8px 0 4px}
+.home-reco__heading{margin-top:34px}
+.home-reco__more{color:var(--olive);font-size:11px;font-weight:700;text-decoration:none;white-space:nowrap}
+.home-reco__more:hover{text-decoration:underline}
+.home-reco__embedded-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
+.home-reco__embedded-heading .eyebrow{margin:0}
+.home-reco--embedded{margin:0}
+.home-reco--embedded .home-reco__slide{grid-template-columns:minmax(105px,42%) 1fr;height:230px;min-height:230px}
+.home-reco--embedded .home-reco__image{height:230px;min-height:230px}
+.home-reco--embedded .home-reco__body{gap:6px;padding:13px}
+.home-reco--embedded .home-reco__body strong{font-size:17px;-webkit-line-clamp:2}
+.home-reco--embedded .home-reco__body b{font-size:10px}
+.home-reco--embedded .home-reco__skeleton{height:230px}
+.home-reco__slideshow{display:grid;gap:10px}
+.home-reco__card{overflow:hidden;border:1px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);text-decoration:none;transition:transform .15s,border-color .15s}
+.home-reco__card:active{transform:scale(.985)}
+.home-reco__card:hover{border-color:#aeb9ae}
+.home-reco__slide{display:grid;grid-template-columns:minmax(0,46%) 1fr;min-height:210px;animation:home-reco-slide-in .28s ease-out}
+.home-reco__image{position:relative;min-height:210px;display:grid;place-items:center;background:linear-gradient(135deg,#e8efdf,var(--paper));font-size:34px;overflow:hidden}
+.home-reco__image img{width:100%;height:100%;object-fit:cover}
+.home-reco__category{position:absolute;left:9px;top:9px;max-width:calc(100% - 18px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 9px;border-radius:999px;background:rgba(255,255,255,.93);color:var(--ink);font-size:10px;font-weight:700}
+.home-reco__body{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:9px;padding:20px}
+.home-reco__body strong{font:600 22px/1.12 Fraunces,serif;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.home-reco__body span{color:var(--muted);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.home-reco__body small{justify-self:start;padding:4px 8px;border-radius:999px;background:#eef4e4;color:var(--olive);font-size:10px;font-weight:700}
+.home-reco__body b{margin-top:4px;color:var(--olive);font-size:12px}
+.home-reco__controls{display:flex;align-items:center;justify-content:center;gap:8px}
+.home-reco__controls>button{width:26px;height:26px;display:grid;place-items:center;padding:0;border:0;border-radius:50%;background:transparent;color:var(--muted);font-size:14px;font-weight:600;opacity:.55;cursor:pointer;transition:opacity .15s,color .15s,background .15s}
+.home-reco__controls>button:hover,.home-reco__controls>button:focus-visible{background:rgba(49,89,61,.07);color:var(--olive);opacity:1}
+.home-reco__dots{display:flex;align-items:center;gap:5px}
+.home-reco__dots button{width:7px;height:7px;padding:0;border:0;border-radius:50%;background:#c6cec5;cursor:pointer;transition:width .2s,background .2s}
+.home-reco__dots button.active{width:20px;border-radius:5px;background:var(--olive)}
+.home-reco__skeleton{height:210px;background:linear-gradient(100deg,#ecece6 20%,#f7f7f3 40%,#ecece6 60%);background-size:200% 100%;animation:home-reco-loading 1.2s infinite}
+@keyframes home-reco-loading{to{background-position:-200% 0}}
+@keyframes home-reco-slide-in{from{opacity:.25;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
+@media(max-width:480px){
+  .home-reco__slide{grid-template-columns:1fr}
+  .home-reco__image{min-height:170px}
+  .home-reco__body{padding:15px}
+  .home-reco__body strong{font-size:19px}
+  .home-reco--embedded .home-reco__slide{grid-template-columns:minmax(105px,40%) 1fr;height:210px;min-height:210px}
+  .home-reco--embedded .home-reco__image{height:210px;min-height:210px}
+  .home-reco--embedded .home-reco__body strong{font-size:16px}
+  .home-reco--embedded .home-reco__skeleton{height:210px}
+}
+@media(prefers-reduced-motion:reduce){.home-reco__slide,.home-reco__skeleton{animation:none}}

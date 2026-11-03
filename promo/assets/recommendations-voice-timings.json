@@ -1,0 +1,50 @@
+{
+  "model": "gpt-4o-mini-tts",
+  "voice": "cedar",
+  "ai_generated": true,
+  "duration": 30.0303,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 3.788,
+      "text": "¿El coro quiere salir, pero nadie sabe pa dónde?",
+      "speed": 1.08,
+      "post_tempo": 1.12
+    },
+    {
+      "start": 4.028,
+      "end": 8.3702,
+      "text": "Junte te recomienda eventos y películas según lo que busca el grupo.",
+      "speed": 1.13,
+      "post_tempo": 1.08
+    },
+    {
+      "start": 8.6102,
+      "end": 15.218,
+      "text": "Elige ciudad, presupuesto, tipo y categoría. Música, festivales, comedia, teatro, cine... hasta planes gratis.",
+      "speed": 1.1,
+      "post_tempo": 1.4
+    },
+    {
+      "start": 15.458,
+      "end": 21.1153,
+      "text": "Abre el evento, mira la fecha, el lugar y el precio, y conviértelo en un plan con un toque.",
+      "speed": 1.1,
+      "post_tempo": 1.05
+    },
+    {
+      "start": 21.3553,
+      "end": 25.8425,
+      "text": "Lo mandas al grupo, votan, confirman quién va y se acabó el rebú.",
+      "speed": 1.1,
+      "post_tempo": 1.06
+    },
+    {
+      "start": 26.0825,
+      "end": 30.0303,
+      "text": "Junte. Descubre el plan. Junta el coro.",
+      "speed": 1.02,
+      "post_tempo": 1.1
+    }
+  ]
+}

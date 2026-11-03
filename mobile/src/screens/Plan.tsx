@@ -10,6 +10,9 @@ import { supabase } from '../lib/supabase'
 import { useCurrentUser, useVirtualRoom } from '../lib/queries'
 import type { RootStackParamList } from '../../App'
 import AttendancePills from '../components/AttendancePills'
+import QueryError from '../components/QueryError'
+import { toUserMessage } from '../lib/errors'
+import { requestPlanNotification } from '../lib/notifications'
 
 type Nav = NativeStackNavigationProp<RootStackParamList>
 type PlanRoute = RouteProp<RootStackParamList, 'Plan'>
@@ -33,7 +36,7 @@ export default function Plan() {
   const currentUserId = user?.id
   const { data: virtualRoom } = useVirtualRoom(planId)
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, error: queryError, isLoading, isError, refetch } = useQuery({
     queryKey: ['plan', planId],
     queryFn: async () => {
       const { data: plan, error: pe } = await supabase.from('plans').select('*, group:group_id(id, name, created_by)').eq('id', planId).single()
@@ -68,7 +71,7 @@ export default function Plan() {
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plan', planId] }),
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(toUserMessage(e, 'No pudimos actualizar tu voto.')),
   })
 
   const attendanceMutation = useMutation({
@@ -79,7 +82,7 @@ export default function Plan() {
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plan', planId] }),
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(toUserMessage(e, 'No pudimos actualizar tu asistencia.')),
   })
 
   const closeVoteMutation = useMutation({
@@ -89,7 +92,7 @@ export default function Plan() {
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plan', planId] }),
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(toUserMessage(e, 'No pudimos cerrar la votación.')),
   })
 
   function handleCloseVote() {
@@ -106,7 +109,7 @@ export default function Plan() {
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plan', planId] }),
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(toUserMessage(e, 'No pudimos cancelar el plan.')),
   })
 
   const deleteMutation = useMutation({
@@ -119,17 +122,21 @@ export default function Plan() {
       queryClient.removeQueries({ queryKey: ['plan', planId] })
       nav.goBack()
     },
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(toUserMessage(e, 'No pudimos eliminar el plan.')),
   })
 
   useEffect(() => {
     if (data?.plan) nav.setOptions({ headerTitle: data.plan.title })
   }, [data, nav])
 
+  useEffect(() => {
+    if (data?.plan?.created_by === currentUserId) void requestPlanNotification(planId)
+  }, [currentUserId, data?.plan?.created_by, planId])
+
   if (isLoading) return <View style={styles.center}><ActivityIndicator size="large" color="#28533a" /></View>
   if (isError || !data?.plan) return (
     <View style={styles.container}>
-      <Text style={styles.emptyState}>No pudimos cargar este plan.</Text>
+      <QueryError error={queryError} onRetry={() => void refetch()} />
     </View>
   )
 

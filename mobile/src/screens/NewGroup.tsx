@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
 import { supabase } from '../lib/supabase'
 import type { RootStackParamList } from '../../App'
+import { toUserMessage } from '../lib/errors'
 
 type Nav = NativeStackNavigationProp<RootStackParamList>
 
@@ -19,15 +20,17 @@ export default function NewGroup() {
     if (!name.trim() || saving) return
     setSaving(true)
     setError(null)
-    const { data: groupId, error: groupError } = await supabase.rpc('create_group', {
-      group_name: name.trim(),
-    })
-    if (groupError || !groupId) {
-      setError('No pudimos crear el grupo. Inténtalo de nuevo.')
+    try {
+      const { data: groupId, error: groupError } = await supabase.rpc('create_group', {
+        group_name: name.trim(),
+      })
+      if (groupError) throw groupError
+      if (!groupId) throw new Error('Missing group id')
+      nav.navigate('Group', { groupId: groupId as string })
+    } catch (submitError) {
+      setError(toUserMessage(submitError, 'No pudimos crear el grupo. Inténtalo de nuevo.'))
       setSaving(false)
-      return
     }
-    nav.navigate('Group', { groupId: groupId as string })
   }
 
   return (

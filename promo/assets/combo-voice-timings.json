@@ -1,0 +1,50 @@
+{
+  "model": "gpt-4o-mini-tts",
+  "voice": "cedar",
+  "ai_generated": true,
+  "duration": 33.7874,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 5.518,
+      "text": "Si el coro quiere juntarse, pero nadie sabe qué hacer, Junte resuelve las dos cosas.",
+      "speed": 1.12,
+      "post_tempo": 1.12
+    },
+    {
+      "start": 5.758,
+      "end": 10.6643,
+      "text": "Primero descubre eventos y películas según la ciudad, el presupuesto y la categoría que buscan.",
+      "speed": 1.12,
+      "post_tempo": 1.12
+    },
+    {
+      "start": 10.9043,
+      "end": 16.511,
+      "text": "Revisan la fecha, el lugar y el precio, eligen lo que les cuadre y lo convierten en plan.",
+      "speed": 1.1,
+      "post_tempo": 1.05
+    },
+    {
+      "start": 16.751,
+      "end": 22.4938,
+      "text": "Si hay varias ideas, votan. Si ya eligieron, confirman quién va y comparten el enlace.",
+      "speed": 1.1,
+      "post_tempo": 1.12
+    },
+    {
+      "start": 22.7338,
+      "end": 27.5576,
+      "text": "Y si el junte es virtual, entran a la sala desde la misma app.",
+      "speed": 1.08,
+      "post_tempo": 1.1
+    },
+    {
+      "start": 27.7976,
+      "end": 33.7874,
+      "text": "Junte. Descubre qué hacer, organiza el coro y deja el mareo. Menos mensajes, más planes.",
+      "speed": 1.02,
+      "post_tempo": 1.2
+    }
+  ]
+}

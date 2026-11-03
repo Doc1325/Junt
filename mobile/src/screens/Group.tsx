@@ -10,6 +10,9 @@ import { supabase } from '../lib/supabase'
 import { useCurrentUser } from '../lib/queries'
 import type { RootStackParamList } from '../../App'
 import InviteSection from '../components/InviteSection'
+import QueryError from '../components/QueryError'
+import { toUserMessage } from '../lib/errors'
+import { invitationUrl } from '../lib/invites'
 
 type Nav = NativeStackNavigationProp<RootStackParamList>
 type GroupRoute = RouteProp<RootStackParamList, 'Group'>
@@ -65,9 +68,9 @@ export default function Group() {
   const { groupId } = route.params
   const { data: user } = useCurrentUser()
   const insets = useSafeAreaInsets()
-  const [inviteLink, setInviteLink] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, error: queryError, isLoading, isError, refetch } = useQuery({
     queryKey: ['group', groupId],
     queryFn: async () => {
       const { data: group, error: ge } = await supabase
@@ -98,11 +101,39 @@ export default function Group() {
 
   const genInvite = useMutation({
     mutationFn: async () => {
+      setActionError(null)
       const { data: token, error } = await supabase.rpc('create_invite', { target_group_id: groupId })
       if (error) throw error
       return token as string
     },
-    onSuccess: (token) => setInviteLink('juntapp://invite/' + token),
+    onSuccess: () => inviteQuery.refetch(),
+    onError: (error) => setActionError(toUserMessage(error, 'No pudimos generar la invitación.')),
+  })
+
+  const isOwner = Boolean(data?.group && user?.id && data.group.created_by === user.id)
+  const inviteQuery = useQuery({
+    queryKey: ['group-invite', groupId],
+    queryFn: async () => {
+      const { data: invite, error } = await supabase.rpc('get_group_invite', { target_group_id: groupId })
+      if (error) throw error
+      return (Array.isArray(invite) ? invite[0] : invite) as {
+        token: string
+        expires_at: string | null
+        uses_count: number
+        max_uses: number | null
+      } | null
+    },
+    enabled: isOwner,
+  })
+
+  const revokeInvite = useMutation({
+    mutationFn: async () => {
+      setActionError(null)
+      const { error } = await supabase.rpc('revoke_group_invite', { target_group_id: groupId })
+      if (error) throw error
+    },
+    onSuccess: () => inviteQuery.refetch(),
+    onError: (error) => setActionError(toUserMessage(error, 'No pudimos revocar la invitación.')),
   })
 
   useEffect(() => {
@@ -112,12 +143,14 @@ export default function Group() {
   if (isLoading) return <View style={styles.center}><ActivityIndicator size="large" color="#28533a" /></View>
   if (isError || !data?.group) return (
     <View style={styles.container}>
-      <Text style={styles.emptyState}>No pudimos abrir este grupo.</Text>
+      <QueryError error={queryError} onRetry={() => void refetch()} />
     </View>
   )
 
   const { group, members, plans, participantCounts } = data
-  const isOwner = user?.id === group.created_by
+  const invite = inviteQuery.data
+  const inviteLink = invite?.token ? invitationUrl(invite.token) : null
+  const inviterName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Alguien'
   const now = new Date()
   const upcoming = plans.filter((p: any) => new Date(p.scheduled_at) >= now)
   const past = plans.filter((p: any) => new Date(p.scheduled_at) < now)
@@ -283,10 +316,21 @@ export default function Group() {
         <InviteSection
           inviteLink={inviteLink}
           groupName={group.name}
+          inviterName={inviterName}
           isOwner={isOwner}
           onGenerate={() => genInvite.mutate()}
-          isPending={genInvite.isPending}
+          onRevoke={() => Alert.alert('Revocar enlace', 'Dejará de funcionar inmediatamente.', [
+            { text: 'Cancelar', style: 'cancel' },
+            { text: 'Revocar', style: 'destructive', onPress: () => revokeInvite.mutate() },
+          ])}
+          isPending={genInvite.isPending || inviteQuery.isLoading}
+          isRevoking={revokeInvite.isPending}
+          expiresAt={invite?.expires_at}
+          usesCount={invite?.uses_count}
+          maxUses={invite?.max_uses}
         />
+        {actionError && <Text style={styles.actionError}>{actionError}</Text>}
+        {inviteQuery.error && <Text style={styles.actionError}>{toUserMessage(inviteQuery.error, 'No pudimos cargar la invitación activa.')}</Text>}
 
         <View style={styles.sectionHeader}>
           <Text style={styles.eyebrow}>MIEMBROS</Text>
@@ -371,6 +415,7 @@ const styles = StyleSheet.create({
   memberName: { fontFamily: 'DMSans_700Bold', fontSize: 14, color: '#18261f' },
   memberRole: { fontFamily: 'DMSans_400Regular', fontSize: 12, color: '#69746d', marginTop: 2 },
   moreMembers: { fontFamily: 'DMSans_500Medium', fontSize: 13, color: '#69746d', textAlign: 'center', marginTop: 4 },
+  actionError: { color: '#a22c20', fontFamily: 'DMSans_400Regular', fontSize: 13, textAlign: 'center', marginTop: -10, marginBottom: 20 },
 
   emptyState: { alignItems: 'center' as const, paddingVertical: 40 },
   emptyStrong: { fontFamily: 'DMSans_700Bold', fontSize: 14, color: '#18261f', marginBottom: 4, textAlign: 'center' as const },

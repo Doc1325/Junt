@@ -11,6 +11,7 @@ export default function Login({ session }: { session: Session | null }) {
     if (!session) return
     const pending = sessionStorage.getItem('pendingRedirect')
     if (pending) {
+      sessionStorage.removeItem('pendingRedirect')
       nav(pending, { replace: true })
     }
   }, [session, nav])

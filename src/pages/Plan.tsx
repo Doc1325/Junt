@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
@@ -6,6 +6,9 @@ import { useCurrentUser, useVirtualRoom } from '../lib/queries'
 import Shell from '../components/Shell'
 import BottomNav from '../components/BottomNav'
 import AttendancePills from '../components/AttendancePills'
+import QueryError from '../components/QueryError'
+import { toUserMessage } from '../lib/errors'
+import { requestPlanNotification } from '../lib/notifications'
 
 function formatDateShort(dateStr: string) {
   return new Intl.DateTimeFormat('es-DO', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }).format(new Date(dateStr)).toUpperCase()
@@ -22,7 +25,7 @@ export default function Plan() {
   const currentUserId = user?.id
   const { data: virtualRoom } = useVirtualRoom(planId)
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, error: queryError, isLoading, isError, refetch } = useQuery({
     queryKey: ['plan', planId],
     queryFn: async () => {
       const { data: plan, error: pe } = await supabase.from('plans').select('*, group:group_id(id, name, created_by)').eq('id', planId).single()
@@ -62,7 +65,7 @@ export default function Plan() {
       }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plan', planId] }),
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(toUserMessage(e, 'No pudimos actualizar tu voto.')),
   })
 
   const attendanceMutation = useMutation({
@@ -73,7 +76,7 @@ export default function Plan() {
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plan', planId] }),
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(toUserMessage(e, 'No pudimos actualizar tu asistencia.')),
   })
 
   const closeVoteMutation = useMutation({
@@ -83,7 +86,7 @@ export default function Plan() {
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plan', planId] }),
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(toUserMessage(e, 'No pudimos cerrar la votación.')),
   })
 
   function handleCloseVote() {
@@ -100,7 +103,7 @@ export default function Plan() {
       if (error) throw error
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['plan', planId] }),
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(toUserMessage(e, 'No pudimos cancelar el plan.')),
   })
 
   const deleteMutation = useMutation({
@@ -114,11 +117,15 @@ export default function Plan() {
       queryClient.removeQueries({ queryKey: ['group', plan.group_id] })
       navigate('/groups/' + plan.group_id)
     },
-    onError: (e: Error) => setError(e.message),
+    onError: (e: Error) => setError(toUserMessage(e, 'No pudimos eliminar el plan.')),
   })
 
+  useEffect(() => {
+    if (data?.plan?.created_by === currentUserId) void requestPlanNotification(planId)
+  }, [currentUserId, data?.plan?.created_by, planId])
+
   if (isLoading) return <Shell><p className='empty-state'>Cargando plan…</p></Shell>
-  if (isError || !data?.plan) return <Shell><Link className='back' to='/'>← Todos los planes</Link><p className='empty-state'>No pudimos cargar este plan.</p></Shell>
+  if (isError || !data?.plan) return <Shell><Link className='back' to='/'>← Todos los planes</Link><QueryError error={queryError} onRetry={() => void refetch()} /></Shell>
 
   const { plan, options, participants, members } = data
   const going = participants.filter((p: any) => p.attendance_status === 'going')

@@ -1,0 +1,38 @@
+{
+  "model": "gpt-4o-mini-tts",
+  "voice": "marin",
+  "ai_generated": true,
+  "duration": 34.7155,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 6.1831,
+      "text": "Si tú 'tá harto de que los coros siempre se barajen porque nadie se pone de acuerdo... te presentamos Junte."
+    },
+    {
+      "start": 6.4831,
+      "end": 12.1554,
+      "text": "Con Junte, tú creas el grupo, mandas el link y ponen las opciones sobre la mesa."
+    },
+    {
+      "start": 12.4554,
+      "end": 17.2413,
+      "text": "Cada quien vota, confirma si va y, en dos minutos, el plan queda armado."
+    },
+    {
+      "start": 17.5413,
+      "end": 22.7993,
+      "text": "¿Que el junte es virtual? También pueden entrar a la sala desde la misma app."
+    },
+    {
+      "start": 23.0993,
+      "end": 29.1188,
+      "text": "Se acabaron los doscientos mensajes, el “déjame ver” y el “¿qué fue lo que se decidió?”."
+    },
+    {
+      "start": 29.4188,
+      "end": 34.7155,
+      "text": "Junte. Menos mensajes, más planes. Arma el próximo coro."
+    }
+  ]
+}

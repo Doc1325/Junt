@@ -15,7 +15,7 @@ export default function Discover() {
   const nav = useNavigation<Nav>()
   const route = useRoute<DiscoverRoute>()
   const insets = useSafeAreaInsets()
-  const { groupId } = route.params
+  const groupId = route.params?.groupId
 
   function handleSelect(item: RecommendItem) {
     const isMovie = item.kind === 'cine'
@@ -31,9 +31,11 @@ export default function Discover() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.page}>
-        <TouchableOpacity onPress={() => nav.navigate('Group', { groupId })}>
-          <Text style={styles.back}>← Volver al grupo</Text>
-        </TouchableOpacity>
+        {!!groupId && (
+          <TouchableOpacity onPress={() => nav.navigate('Group', { groupId })}>
+            <Text style={styles.back}>← Volver al grupo</Text>
+          </TouchableOpacity>
+        )}
         <Recommendations onSelect={handleSelect} groupId={groupId} />
       </View>
       <View style={{ height: insets.bottom + 20 }} />

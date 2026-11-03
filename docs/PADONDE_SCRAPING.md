@@ -52,3 +52,23 @@ Dos fuentes parseables sin JS:
 - **Listado ciudades:** `fetch /, /eventos/santo-domingo, /eventos/santiago` → `extractSlugs` vía `href="/evento/([^"]+)"`.
 - Filtros reales padonde.do: `province` (Santo Domingo, Santiago, Puerto Plata...), `category` (Comedia, Teatro, Música, Cultura, Otros, Deporte, Familia), `price_tag` (Gratis vs De pago, badge).
 
+## 6. Precedencia de precio
+
+Pa' Dónde puede publicar `offers.price = "Gratis"` y un badge `Gratis` aunque la descripción exija consumo mínimo. Junt no debe considerar esos eventos gratuitos. La clasificación usa esta precedencia:
+
+1. Badge explícito con moneda o precio.
+2. Descripción con `consumo mínimo`, `cover`, `boletas`, `tickets`, `preventa` o `admisión` pagada.
+3. Precio pagado del objeto RSC principal o del JSON-LD.
+4. Badge gratuito del evento principal.
+5. Precio gratuito RSC/JSON-LD.
+
+El precio RSC nunca se busca en toda la página, porque podría pertenecer a la sección de eventos similares.
+
+## 7. Control de calidad de fuentes externas
+
+Los enlaces específicos de Zona Colonial bajo `/actividad/<slug>` son eventos válidos.
+La página genérica `zonacolonial.do/actividades/`, en cambio, contiene tarjetas de
+patrocinadores que Pa' Dónde puede presentar como si fueran eventos. El scraper rechaza
+únicamente esa página genérica y registra el caso en `eventsRejected`; no bloquea el
+dominio completo ni elimina eventos legítimos de Zona Colonial.
+

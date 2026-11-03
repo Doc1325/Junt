@@ -89,7 +89,7 @@ export function planTitleFor(item: { title: string; category?: string; kind: str
   return `${prefix}: ${item.title}`
 }
 
-export function buildRecommendUrl(filters: JunteFilters, page = 1): string | null {
+export function buildRecommendUrl(filters: JunteFilters, page = 1, limit = 50): string | null {
   const base = process.env.EXPO_PUBLIC_SUPABASE_URL?.replace(/\/$/, '')
   if (!base) return null
   const params = new URLSearchParams()
@@ -98,13 +98,13 @@ export function buildRecommendUrl(filters: JunteFilters, page = 1): string | nul
   if (filters.type !== 'todos') params.set('type', filters.type)
   if (filters.category !== 'Todas') params.set('category', filters.category)
   if (filters.sort && filters.sort !== 'score') params.set('sort', filters.sort)
-  params.set('limit', '50')
+  params.set('limit', String(Math.min(Math.max(limit, 1), 50)))
   params.set('page', String(page))
   return `${base}/functions/v1/recommend?${params.toString()}`
 }
 
-export async function fetchRecommendations(filters: JunteFilters, page = 1): Promise<RecommendResponse> {
-  const url = buildRecommendUrl(filters, page)
+export async function fetchRecommendations(filters: JunteFilters, page = 1, limit = 50): Promise<RecommendResponse> {
+  const url = buildRecommendUrl(filters, page, limit)
   if (!url) throw new Error('Supabase no configurado')
   const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!
   const res = await fetch(url, { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` } })

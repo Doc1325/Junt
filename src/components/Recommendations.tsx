@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchRecommendations, JUNTE_BUDGETS, JUNTE_CATEGORIES, JUNTE_CITIES, JUNTE_TYPES, type JunteFilters } from '../lib/recommendations'
 import './Recommendations.css'
+import QueryError from './QueryError'
 
 function Select({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: readonly string[] }) {
   return (
@@ -23,7 +24,7 @@ function Select({ label, value, onChange, options }: { label: string; value: str
 export default function Recommendations({ onSelect, groupId }: { onSelect?: (item: Record<string, unknown>) => void; groupId?: string }) {
   const [filters, setFilters] = useState<JunteFilters>({ city: 'Todas', budget: 'Cualquiera', type: 'todos', category: 'Todas', sort: 'score' })
   const [page, setPage] = useState(1)
-  const { data: resp, isLoading, error, isFetching } = useQuery({
+  const { data: resp, isLoading, error, isFetching, refetch } = useQuery({
     queryKey: ['recommend', filters, page],
     queryFn: () => fetchRecommendations(filters, page),
   })
@@ -63,7 +64,7 @@ export default function Recommendations({ onSelect, groupId }: { onSelect?: (ite
         <p className="text-xs text-[var(--muted)] text-center">{total} resultados · página {page} de {Math.ceil(total / 50)}</p>
       )}
 
-      {error && <p className="form-error">No pudimos cargar recomendaciones: {(error as Error).message}</p>}
+      {error && <QueryError error={error} onRetry={() => void refetch()} />}
       {!isLoading && !error && data.length === 0 && (
         <div className="reco__empty">
           <p style={{ fontWeight:600, color:'var(--ink)', fontSize:14, margin:0 }}>No hay salidas con esos filtros</p>

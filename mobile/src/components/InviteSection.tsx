@@ -1,17 +1,23 @@
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, Linking, ActivityIndicator } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, Linking, ActivityIndicator, Share } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Clipboard from 'expo-clipboard'
 
 type Props = {
   inviteLink: string | null
   groupName: string
+  inviterName: string
   isOwner: boolean
   onGenerate: () => void
+  onRevoke: () => void
   isPending: boolean
+  isRevoking: boolean
+  expiresAt?: string | null
+  usesCount?: number
+  maxUses?: number | null
 }
 
-export default function InviteSection({ inviteLink, groupName, isOwner, onGenerate, isPending }: Props) {
+export default function InviteSection({ inviteLink, groupName, inviterName, isOwner, onGenerate, onRevoke, isPending, isRevoking, expiresAt, usesCount = 0, maxUses }: Props) {
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {
@@ -23,8 +29,13 @@ export default function InviteSection({ inviteLink, groupName, isOwner, onGenera
 
   function shareWhatsApp() {
     if (!inviteLink) return
-    const text = '👋 Te invitaron a "' + groupName + '" en JuntApp\n\nÚnete con este enlace:\n' + inviteLink
+    const text = '👋 ' + inviterName + ' te invitó a "' + groupName + '" en JuntApp.\n\nÚnete aquí:\n' + inviteLink
     Linking.openURL('https://wa.me/?text=' + encodeURIComponent(text))
+  }
+
+  async function shareInvite() {
+    if (!inviteLink) return
+    await Share.share({ message: `👋 ${inviterName} te invitó a "${groupName}" en JuntApp.\n\nÚnete aquí:\n${inviteLink}` })
   }
 
   return (
@@ -39,7 +50,10 @@ export default function InviteSection({ inviteLink, groupName, isOwner, onGenera
                 </View>
                 <Text style={styles.strong}>Invita a tu gente</Text>
               </View>
-              <Text style={styles.p}>Enlace listo para compartir</Text>
+              <Text style={styles.p}>
+                {expiresAt ? `Vence ${new Date(expiresAt).toLocaleDateString('es-DO', { day: 'numeric', month: 'short' })}` : 'Enlace activo'}
+                {maxUses ? ` · ${usesCount}/${maxUses} usos` : ''}
+              </Text>
             </View>
             <TouchableOpacity style={styles.copyBtn} onPress={handleCopy}>
               <Text style={styles.copyBtnText}>{copied ? 'Copiado' : 'Copiar'}</Text>
@@ -47,6 +61,12 @@ export default function InviteSection({ inviteLink, groupName, isOwner, onGenera
           </View>
           <TouchableOpacity style={styles.whatsapp} onPress={shareWhatsApp}>
             <Text style={styles.whatsappText}>Compartir por WhatsApp</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.share} onPress={() => void shareInvite()}>
+            <Text style={styles.shareText}>Compartir por otra app</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.revoke} onPress={onRevoke} disabled={isRevoking}>
+            <Text style={styles.revokeText}>{isRevoking ? 'Revocando…' : 'Revocar enlace'}</Text>
           </TouchableOpacity>
         </>
       ) : isOwner ? (
@@ -148,4 +168,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#fff',
   },
+  share: { marginTop: 8, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#28533a', alignItems: 'center' },
+  shareText: { color: '#28533a', fontFamily: 'DMSans_700Bold', fontSize: 12 },
+  revoke: { alignItems: 'center', paddingVertical: 10, marginTop: 2 },
+  revokeText: { color: '#8f2f24', fontFamily: 'DMSans_700Bold', fontSize: 12 },
 })

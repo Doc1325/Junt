@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabase'
 import Shell from '../components/Shell'
 
 function extractToken(input: string): string | null {
@@ -30,13 +29,7 @@ export default function Join() {
     }
     setJoining(true)
     setError(null)
-    const { data: groupId, error: rpcError } = await supabase.rpc('accept_invite', { invite_token: token })
-    if (rpcError || !groupId) {
-      setError('Este enlace no es válido o ya expiró.')
-      setJoining(false)
-      return
-    }
-    nav('/groups/' + groupId, { replace: true })
+    nav('/invite/' + token)
   }
 
   return (

@@ -18,6 +18,15 @@
 .detail__meta-icon{ width:32px; height:32px; border-radius:50%; background:var(--paper); border:1px solid var(--line); display:grid; place-items:center; font-size:13px; flex-shrink:0; }
 .detail__desc{ padding-top:18px; border-top:1px solid var(--line); }
 .detail__desc p{ font-size:13px; line-height:1.6; color:var(--ink); white-space:pre-wrap; margin:8px 0 0; }
+.detail__group-picker{display:grid;gap:12px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+.detail__group-picker p{margin:0}
+.detail__group-picker>div>p:last-child{color:var(--muted);font-size:13px}
+.detail__group-options{display:flex;flex-wrap:wrap;gap:8px}
+.detail__group-options button{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font:700 12px 'DM Sans',sans-serif;cursor:pointer}
+.detail__group-options button>span{width:25px;height:25px;border-radius:7px;display:grid;place-items:center;background:#e8efdf;color:var(--olive);font-size:9px}
+.detail__group-options button.selected{border-color:var(--olive);background:#eef6e8;box-shadow:0 0 0 1px var(--olive)}
+.detail__group-loading,.detail__no-groups{color:var(--muted);font-size:13px}
+.detail__no-groups a{color:var(--olive);font-weight:700}
 .detail__actions{ display:flex; gap:12px; padding-top:8px; }
 .detail__actions .primary-action{ flex:1.2; }
 .detail__actions a{ flex:1; display:grid; place-items:center; border:1px solid var(--line); background:#fff; border-radius:10px; font-weight:700; color:var(--ink); text-decoration:none; padding:14px; }

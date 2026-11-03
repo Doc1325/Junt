@@ -7,6 +7,8 @@ import type { RootStackParamList, MainTabParamList } from '../../App'
 import Shell from '../components/Shell'
 import StatsCards from '../components/StatsCards'
 import ScalePressable from '../components/ScalePressable'
+import QueryError from '../components/QueryError'
+import HomeRecommendations from '../components/HomeRecommendations'
 
 type Nav = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>,
@@ -20,7 +22,7 @@ function initials(name: string | null | undefined) {
 
 export default function Dashboard() {
   const nav = useNavigation<Nav>()
-  const { data: groups = [], isLoading, isError } = useGroups()
+  const { data: groups = [], error, isLoading, isError, refetch } = useGroups()
   const { data: friendsCount = 0 } = useFriendsCount()
   const { data: pendingCount = 0 } = usePendingPlansCount()
 
@@ -41,6 +43,15 @@ export default function Dashboard() {
           { icon: 'heart-outline', value: friendsCount, label: 'Amigos' },
         ]} />
 
+        <HomeRecommendations
+          onViewMore={() => nav.navigate('Discover')}
+          onSelect={(item) => nav.navigate('EventDetail', {
+            kind: 'evento',
+            slug: String(item.slug ?? ''),
+            item: JSON.stringify(item),
+          })}
+        />
+
         <View style={[styles.sectionHeader, groups.length === 0 && { marginTop: 0 }]}>
           <View>
             <Text style={styles.eyebrow}>TUS GRUPOS</Text>
@@ -49,7 +60,7 @@ export default function Dashboard() {
         </View>
 
         {isLoading && <Text style={styles.emptyState}>Cargando tus grupos…</Text>}
-        {isError && <Text style={styles.emptyState}>No pudimos cargar los grupos. Reinténtalo en un momento.</Text>}
+        {isError && <QueryError error={error} onRetry={() => void refetch()} />}
         {!isLoading && !isError && groups.length === 0 && (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStrong}>Aún no tienes grupos.</Text>

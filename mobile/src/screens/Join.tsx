@@ -3,7 +3,6 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Activi
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useNavigation } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { supabase } from '../lib/supabase'
 import type { RootStackParamList } from '../../App'
 
 type Nav = NativeStackNavigationProp<RootStackParamList>
@@ -32,13 +31,7 @@ export default function Join() {
     }
     setJoining(true)
     setError(null)
-    const { data: groupId, error: rpcError } = await supabase.rpc('accept_invite', { invite_token: token })
-    if (rpcError || !groupId) {
-      setError('Este enlace no es válido o ya expiró.')
-      setJoining(false)
-      return
-    }
-    nav.navigate('Group', { groupId: groupId as string })
+    nav.navigate('InviteAccept', { token })
   }
 
   return (

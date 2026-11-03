@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react'
 import { Link, useParams, useNavigate, useLocation } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { useGroups } from '../lib/queries'
 import Shell from '../components/Shell'
 import './EventDetail.css'
 
@@ -19,7 +21,14 @@ const PLAN_PREFIX: Record<string, string> = {
 export default function EventDetail() {
   const { kind = 'evento', slug = '' } = useParams()
   const nav = useNavigate()
-  const location = useLocation() as { state?: { item?: Record<string, unknown> } }
+  const location = useLocation() as { state?: { item?: Record<string, unknown>; groupId?: string } }
+  const { data: groups = [], isLoading: groupsLoading } = useGroups()
+  const [selectedGroupId, setSelectedGroupId] = useState(location.state?.groupId ?? '')
+
+  useEffect(() => {
+    if (selectedGroupId || groups.length !== 1) return
+    setSelectedGroupId(groups[0].id)
+  }, [groups, selectedGroupId])
 
   const { data: item, isLoading } = useQuery({
     queryKey: ['event-detail', kind, slug],
@@ -55,14 +64,15 @@ export default function EventDetail() {
   const planTitle = title.toLowerCase().startsWith(planPrefix.toLowerCase()) ? title : `${planPrefix}: ${title}`
 
   const useForPlan = () => {
+    if (!selectedGroupId) return
     const startDate = (item as { start_date: string }).start_date
     const hourStart = (item as { hour_start: string }).hour_start
     const scheduledAt = startDate ? (hourStart ? `${startDate}T${hourStart.slice(0,5)}` : `${startDate}T19:00`) : undefined
     sessionStorage.setItem('junte_prefill', JSON.stringify({ title: planTitle, description: source || desc || '', scheduledAt }))
-    const groupId = (location.state as { groupId?: string })?.groupId
-    if (groupId) nav(`/groups/${groupId}/plans/new`)
-    else nav(-1 as unknown as string)
+    nav(`/groups/${selectedGroupId}/plans/new`)
   }
+
+  const selectedGroup = groups.find((group) => group.id === selectedGroupId)
 
   return (
     <Shell>
@@ -83,8 +93,37 @@ export default function EventDetail() {
               <span className="detail__meta-row"><span className="detail__meta-icon">💸</span> <strong className={priceTag==='Gratis'?'text-[#1a7a3a]':''}>{price}</strong></span>
             </div>
             {desc && <div className="detail__desc"><p className="eyebrow">SOBRE EL EVENTO</p><p>{desc}</p></div>}
+            <div className="detail__group-picker">
+              <div>
+                <p className="eyebrow">¿CON QUÉ GRUPO?</p>
+                <p>Selecciona dónde quieres proponer este evento.</p>
+              </div>
+              {groupsLoading ? (
+                <span className="detail__group-loading">Cargando tus grupos…</span>
+              ) : groups.length > 0 ? (
+                <div className="detail__group-options" role="radiogroup" aria-label="Selecciona un grupo">
+                  {groups.map((group) => (
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={selectedGroupId === group.id}
+                      className={selectedGroupId === group.id ? 'selected' : ''}
+                      onClick={() => setSelectedGroupId(group.id)}
+                      key={group.id}
+                    >
+                      <span>{group.name.slice(0, 2).toUpperCase()}</span>
+                      {group.name}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="detail__no-groups">Necesitas un grupo para proponerlo. <Link to="/groups/new">Crear grupo</Link></p>
+              )}
+            </div>
             <div className="detail__actions">
-              <button onClick={useForPlan} className="primary-action">Usar para plan</button>
+              <button onClick={useForPlan} className="primary-action" disabled={!selectedGroupId}>
+                {selectedGroup ? `Proponer en ${selectedGroup.name}` : 'Selecciona un grupo'}
+              </button>
               {source && <a href={source} target="_blank" rel="noopener noreferrer">Ver fuente</a>}
             </div>
           </div>

@@ -6,6 +6,8 @@ import { useCurrentUser } from '../lib/queries'
 import Shell from '../components/Shell'
 import BottomNav from '../components/BottomNav'
 import InviteSection from '../components/InviteSection'
+import QueryError from '../components/QueryError'
+import { toUserMessage } from '../lib/errors'
 
 function initials(name: string | null | undefined) {
   if (!name) return '?'
@@ -52,9 +54,9 @@ export default function Group() {
   const { groupId = '' } = useParams()
   const nav = useNavigate()
   const { data: user } = useCurrentUser()
-  const [inviteLink, setInviteLink] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, error: queryError, isLoading, isError, refetch } = useQuery({
     queryKey: ['group', groupId],
     queryFn: async () => {
       const { data: group, error: ge } = await supabase
@@ -87,23 +89,54 @@ export default function Group() {
 
   const genInvite = useMutation({
     mutationFn: async () => {
+      setActionError(null)
       const { data: token, error } = await supabase.rpc('create_invite', { target_group_id: groupId })
       if (error) throw error
       return token as string
     },
-    onSuccess: (token) => setInviteLink(window.location.origin + '/invite/' + token),
+    onSuccess: () => inviteQuery.refetch(),
+    onError: (error) => setActionError(toUserMessage(error, 'No pudimos generar la invitación.')),
+  })
+
+  const isOwner = Boolean(data?.group && user?.id && data.group.created_by === user.id)
+  const inviteQuery = useQuery({
+    queryKey: ['group-invite', groupId],
+    queryFn: async () => {
+      const { data: invite, error } = await supabase.rpc('get_group_invite', { target_group_id: groupId })
+      if (error) throw error
+      return (Array.isArray(invite) ? invite[0] : invite) as {
+        token: string
+        expires_at: string | null
+        uses_count: number
+        max_uses: number | null
+      } | null
+    },
+    enabled: Boolean(isOwner),
+  })
+
+  const revokeInvite = useMutation({
+    mutationFn: async () => {
+      setActionError(null)
+      const { error } = await supabase.rpc('revoke_group_invite', { target_group_id: groupId })
+      if (error) throw error
+    },
+    onSuccess: () => inviteQuery.refetch(),
+    onError: (error) => setActionError(toUserMessage(error, 'No pudimos revocar la invitación.')),
   })
 
   if (isLoading) return <Shell><p className="empty-state">Cargando grupo…</p></Shell>
   if (isError || !data?.group) return (
     <Shell>
       <Link className="back" to="/">← Todos los grupos</Link>
-      <p className="empty-state">No pudimos abrir este grupo.</p>
+      <QueryError error={queryError} onRetry={() => void refetch()} />
     </Shell>
   )
 
   const { group, members, plans, participantCounts } = data
-  const isOwner = user?.id === group.created_by
+  const invite = inviteQuery.data
+  const appUrl = (import.meta.env.VITE_APP_URL || window.location.origin).replace(/\/$/, '')
+  const inviteLink = invite?.token ? `${appUrl}/invite/${invite.token}` : null
+  const inviterName = user?.user_metadata?.full_name || user?.user_metadata?.name || 'Alguien'
   const now = new Date()
   const upcoming = plans.filter((p: any) => new Date(p.scheduled_at) >= now)
   const past = plans.filter((p: any) => new Date(p.scheduled_at) < now)
@@ -236,10 +269,18 @@ export default function Group() {
       <InviteSection
         inviteLink={inviteLink}
         groupName={group.name}
+        inviterName={inviterName}
         isOwner={isOwner}
         onGenerate={() => genInvite.mutate()}
-        isPending={genInvite.isPending}
+        onRevoke={() => { if (confirm('¿Revocar este enlace? Dejará de funcionar inmediatamente.')) revokeInvite.mutate() }}
+        isPending={genInvite.isPending || inviteQuery.isLoading}
+        isRevoking={revokeInvite.isPending}
+        expiresAt={invite?.expires_at}
+        usesCount={invite?.uses_count}
+        maxUses={invite?.max_uses}
       />
+      {actionError && <p className='form-error' role='alert' style={{ margin: '-10px 0 20px' }}>{actionError}</p>}
+      {inviteQuery.error && <p className='form-error' role='alert' style={{ margin: '-10px 0 20px' }}>{toUserMessage(inviteQuery.error, 'No pudimos cargar la invitación activa.')}</p>}
 
       <section className="section-heading">
         <div>

@@ -7,6 +7,8 @@ import type { RouteProp } from '@react-navigation/native'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { supabase } from '../lib/supabase'
 import type { RootStackParamList } from '../../App'
+import { toUserMessage } from '../lib/errors'
+import { requestPlanNotification } from '../lib/notifications'
 
 type Nav = NativeStackNavigationProp<RootStackParamList>
 type PlanRoute = RouteProp<RootStackParamList, 'NewWatchPlan'>
@@ -27,17 +29,20 @@ export default function NewWatchPlan() {
     if (!title.trim() || !scheduledAt || saving) return
     setSaving(true)
     setError(null)
-    const { data: planId, error: rpcError } = await supabase.rpc('create_virtual_plan', {
-      target_group_id: groupId,
-      plan_title: title.trim(),
-      plan_scheduled_at: scheduledAt.toISOString(),
-    })
-    if (rpcError || !planId) {
-      setError('No pudimos crear la sala virtual. Inténtalo de nuevo.')
+    try {
+      const { data: planId, error: rpcError } = await supabase.rpc('create_virtual_plan', {
+        target_group_id: groupId,
+        plan_title: title.trim(),
+        plan_scheduled_at: scheduledAt.toISOString(),
+      })
+      if (rpcError) throw rpcError
+      if (!planId) throw new Error('Missing plan id')
+      void requestPlanNotification(planId as string)
+      nav.replace('Plan', { planId: planId as string })
+    } catch (submitError) {
+      setError(toUserMessage(submitError, 'No pudimos crear la sala virtual. Inténtalo de nuevo.'))
       setSaving(false)
-      return
     }
-    nav.replace('Plan', { planId: planId as string })
   }
 
   return (

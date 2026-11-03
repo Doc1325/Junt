@@ -7,6 +7,8 @@ import type { RouteProp } from '@react-navigation/native'
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker'
 import { supabase } from '../lib/supabase'
 import type { RootStackParamList } from '../../App'
+import { toUserMessage } from '../lib/errors'
+import { requestPlanNotification } from '../lib/notifications'
 
 type Nav = NativeStackNavigationProp<RootStackParamList>
 type PlanRoute = RouteProp<RootStackParamList, 'NewPlan'>
@@ -36,46 +38,27 @@ export default function NewPlan() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function notifyMembers(planId: string) {
-    try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) return
-      const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.replace(/\/$/, '')
-      const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
-      if (!supabaseUrl || !anonKey) return
-      await fetch(`${supabaseUrl}/functions/v1/notify-new-plan`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-          'apikey': anonKey,
-        },
-        body: JSON.stringify({ planId }),
-      })
-    } catch (e) {
-      console.warn('[notify-new-plan] fallo', e)
-    }
-  }
-
   async function submit() {
     if (!title.trim() || !scheduledAt || saving) return
     const optionTitles = options.split('\n').map((o) => o.trim()).filter(Boolean)
     setSaving(true)
     setError(null)
-    const { data: planId, error: rpcError } = await supabase.rpc('create_plan', {
-      target_group_id: groupId,
-      plan_title: title.trim(),
-      plan_scheduled_at: scheduledAt.toISOString(),
-      option_titles: optionTitles,
-      plan_type: planType,
-    })
-    if (rpcError || !planId) {
-      setError('No pudimos publicar el plan. Inténtalo de nuevo.')
+    try {
+      const { data: planId, error: rpcError } = await supabase.rpc('create_plan', {
+        target_group_id: groupId,
+        plan_title: title.trim(),
+        plan_scheduled_at: scheduledAt.toISOString(),
+        option_titles: optionTitles,
+        plan_type: planType,
+      })
+      if (rpcError) throw rpcError
+      if (!planId) throw new Error('Missing plan id')
+      void requestPlanNotification(planId as string)
+      nav.replace('Plan', { planId: planId as string })
+    } catch (submitError) {
+      setError(toUserMessage(submitError, 'No pudimos publicar el plan. Inténtalo de nuevo.'))
       setSaving(false)
-      return
     }
-    notifyMembers(planId as string)
-    nav.replace('Plan', { planId: planId as string })
   }
 
   return (

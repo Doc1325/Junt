@@ -21,9 +21,14 @@ movies(id uuid, external_id text unique, title text, genres text[], rating float
 
 ## Edge Functions
 
-### scrape-padonde (cron diario 06:00)
+### scrape-padonde (cron diario desde las 06:00)
 
-`supabase/functions/scrape-padonde/index.ts` — usa `service_role`:
+`supabase/functions/scrape-padonde/index.ts` — usa `service_role` y se divide en lotes para respetar el límite de las Edge Functions:
+
+- 06:00: modo `discover`, actualiza cine y llena `scrape_event_queue`.
+- 06:05–06:41: modo `catalog`, hasta 520 eventos en lotes de 40.
+- 07:00–07:36: modo `prices`, vuelve a comprobar hasta 520 filas.
+- Cada invocación queda registrada en `scrape_runs` con estado, métricas y error.
 
 1. `GET /api/moviesWeek` + `/api/moviesSoon` → `upsert movies` onConflict `external_id`
 2. `GET /, /eventos/santo-domingo, /eventos/santiago` → `extractSlugs` via `href="/evento/([^"]+)"` → set de slugs
@@ -78,8 +83,7 @@ supabase link --project-ref qyvawuzuumlammtqxljd
 supabase db push # ya pushado 20260201 (events/movies)
 supabase functions deploy scrape-padonde --no-verify-jwt
 supabase functions deploy recommend --no-verify-jwt
-supabase functions invoke scrape-padonde --no-verify-jwt # poblar
-# cron: Dashboard > Edge Functions > Cron 0 6 * * * -> scrape-padonde
+# El cron, Vault, la cola y scrape_runs se crean mediante migración.
 npm run build # vite ok
 ```
 

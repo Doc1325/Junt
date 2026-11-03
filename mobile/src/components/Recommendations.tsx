@@ -22,6 +22,7 @@ import {
   type RecommendItem,
 } from '../lib/recommendations'
 import { colors, fonts, fontSizes, radii } from '../theme'
+import QueryError from './QueryError'
 
 function Dropdown({
   label,
@@ -97,7 +98,7 @@ export default function Recommendations({
     sort: 'score',
   })
   const [page, setPage] = useState(1)
-  const { data: resp, isLoading, error, isFetching } = useQuery({
+  const { data: resp, isLoading, error, isFetching, refetch } = useQuery({
     queryKey: ['recommend', filters, page],
     queryFn: () => fetchRecommendations(filters, page),
   })
@@ -186,7 +187,7 @@ export default function Recommendations({
         </Text>
       )}
       {!!error && (
-        <Text style={styles.error}>No pudimos cargar recomendaciones: {(error as Error).message}</Text>
+        <QueryError error={error} onRetry={() => void refetch()} />
       )}
       {!isLoading && !error && data.length === 0 && (
         <View style={styles.empty}>

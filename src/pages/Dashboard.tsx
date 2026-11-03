@@ -5,14 +5,15 @@ import { useGroups, useCurrentUser } from '../lib/queries'
 import Shell from '../components/Shell'
 import BottomNav from '../components/BottomNav'
 import StatsCards from '../components/StatsCards'
-import HeroIllustration from '../components/HeroIllustration'
+import QueryError from '../components/QueryError'
+import HomeRecommendations from '../components/HomeRecommendations'
 
 function initials(name: string) {
   return name.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
 }
 
 export default function Dashboard() {
-  const { data: groups = [], isLoading, isError } = useGroups()
+  const { data: groups = [], error, isLoading, isError, refetch } = useGroups()
   const { data: user } = useCurrentUser()
 
   const { data: pendingCount = 0 } = useQuery({
@@ -50,13 +51,13 @@ export default function Dashboard() {
 
   return (
     <Shell>
-      <div className="hero-section">
+      <div className="hero-section dashboard-hero">
         <div className="hero-copy">
           <p className="eyebrow">TUS PLANES</p>
           <h1>¿Qué hacemos<br />esta vez?</h1>
           <p>Decidan sin el eterno "¿qué quieren hacer?".</p>
         </div>
-        <HeroIllustration />
+        <HomeRecommendations embedded />
       </div>
 
       <StatsCards groups={groups.length} pending={pendingCount} friends={friendsCount} />
@@ -74,7 +75,7 @@ export default function Dashboard() {
       </section>
 
       {isLoading && <p className="empty-state">Cargando tus grupos…</p>}
-      {isError && <p className="empty-state">No pudimos cargar los grupos. Reinténtalo en un momento.</p>}
+      {isError && <QueryError error={error} onRetry={() => void refetch()} />}
       {!isLoading && !isError && groups.length === 0 && (
         <div className="empty-state">
           <strong>Aún no tienes grupos.</strong>

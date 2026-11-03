@@ -77,3 +77,32 @@ export async function registerForPushNotificationsAsync(userId?: string) {
     console.log('[push] Error:', e.message)
   }
 }
+
+const wait = (milliseconds: number) => new Promise((resolve) => setTimeout(resolve, milliseconds))
+
+export async function requestPlanNotification(planId: string) {
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return
+
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL?.replace(/\/$/, '')
+  const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
+  if (!supabaseUrl || !anonKey) return
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/notify-new-plan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: anonKey,
+        },
+        body: JSON.stringify({ planId }),
+      })
+      if (response.ok || (response.status >= 400 && response.status < 500)) return
+    } catch {
+      // The next attempt or opening the plan again will retry the same outbox event.
+    }
+    await wait(500 * (2 ** attempt))
+  }
+}
